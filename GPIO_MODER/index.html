@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPIO 工作模式原理动画讲解</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>GPIO 工作模式原理动画讲解</h1>
+  </header>
+
+  <main>
+    <div id="sidebar">
+      <button class="mode-btn" onclick="setMode('floating')">1. 浮空输入</button>
+      <button class="mode-btn" onclick="setMode('pullup')">2. 上拉输入</button>
+      <button class="mode-btn" onclick="setMode('pulldown')">3. 下拉输入</button>
+      <button class="mode-btn" onclick="setMode('analog')">4. 模拟输入</button>
+      <button class="mode-btn" onclick="setMode('opendrain')">5. 开漏输出</button>
+      <button class="mode-btn" onclick="setMode('pushpull')">6. 推挽输出</button>
+      <button class="mode-btn" onclick="setMode('alt_opendrain')">7. 复用开漏</button>
+      <button class="mode-btn" onclick="setMode('alt_pushpull')">8. 复用推挽</button>
+    </div>
+
+    <div id="content">
+      <div id="canvas-container">
+        <svg viewBox="0 0 900 550" id="circuit-svg">
+          <rect x="40" y="40" width="580" height="470" rx="15" class="mcu-box" />
+          <text x="60" y="30" class="mcu-label">MCU 内部</text>
+          <text x="640" y="30" class="ext-label">外部电路</text>
+
+          <line x1="100" y1="70" x2="450" y2="70" stroke="#333" stroke-width="2" />
+          <text x="70" y="75" class="label-text">VDD</text>
+          <line x1="100" y1="480" x2="450" y2="480" stroke="#333" stroke-width="2" />
+          <text x="70" y="485" class="label-text">VSS (GND)</text>
+
+          <path d="M160,70 L160,110 M150,110 L170,115 L150,120 L170,125 L150,130 L170,135 L160,140" class="resistor" />
+          <line x1="160" y1="140" x2="160" y2="175" class="wire" id="pu-switch-wire" />
+          <line x1="160" y1="175" x2="185" y2="155" class="switch-line" id="pu-switch" />
+          <circle cx="160" cy="175" r="3" fill="#333" />
+          <text x="110" y="125" class="label-text">上拉电阻</text>
+
+          <path d="M160,480 L160,440 M150,440 L170,435 L150,430 L170,425 L150,420 L170,415 L160,410" class="resistor" />
+          <line x1="160" y1="410" x2="160" y2="375" class="wire" id="pd-switch-wire" />
+          <line x1="160" y1="375" x2="185" y2="395" class="switch-line" id="pd-switch" />
+          <circle cx="160" cy="375" r="3" fill="#333" />
+          <text x="110" y="430" class="label-text">下拉电阻</text>
+
+          <line x1="280" y1="70" x2="280" y2="110" class="wire" id="pmos-top" />
+          <rect x="255" y="110" width="50" height="50" class="component" id="pmos-body" />
+          <circle cx="255" cy="135" r="5" fill="none" stroke="#333" id="pmos-gate-bubble" />
+          <line x1="220" y1="135" x2="250" y2="135" class="wire" id="pmos-gate" />
+          <text x="315" y="135" class="label-text">PMOS（上管）</text>
+          <text x="265" y="140" class="mos-label">P-CH</text>
+
+          <line x1="280" y1="480" x2="280" y2="440" class="wire" id="nmos-bottom" />
+          <rect x="255" y="390" width="50" height="50" class="component" id="nmos-body" />
+          <line x1="220" y1="415" x2="255" y2="415" class="wire" id="nmos-gate" />
+          <text x="315" y="420" class="label-text">NMOS（下管）</text>
+          <text x="265" y="420" class="mos-label">N-CH</text>
+
+          <rect x="60" y="210" width="120" height="130" rx="8" fill="var(--logic-bg)" stroke="#1565c0" />
+          <text x="75" y="270" class="label-text" style="font-weight: bold;">GPIO 控制</text>
+          <text x="95" y="290" class="label-text" style="font-weight: bold;">逻辑</text>
+
+          <path d="M60,180 L100,180 L100,210" fill="none" stroke="#666" stroke-dasharray="5" id="alt-func-path" />
+          <text x="60" y="175" class="label-text" fill="#666">复用功能连接</text>
+
+          <polygon points="400,240 450,275 400,310" class="buffer" id="input-buffer" />
+          <text x="390" y="230" class="label-text">输入缓冲器</text>
+          <line x1="450" y1="275" x2="520" y2="275" class="wire" id="input-to-reg" />
+          <text x="460" y="265" class="label-text">输入寄存器</text>
+
+          <line x1="400" y1="350" x2="440" y2="350" class="wire" id="analog-wire" />
+          <line x1="440" y1="350" x2="465" y2="325" class="switch-line" id="analog-switch" />
+          <circle cx="440" cy="350" r="3" fill="#333" />
+          <text x="390" y="340" class="label-text">模拟开关</text>
+          <line x1="480" y1="350" x2="530" y2="350" class="wire" id="to-adc" />
+          <text x="490" y="375" class="label-text">至 ADC</text>
+
+          <line x1="180" y1="275" x2="620" y2="275" class="wire" id="main-wire" />
+          <line x1="160" y1="175" x2="160" y2="275" class="wire" id="pu-connect" />
+          <line x1="160" y1="375" x2="160" y2="275" class="wire" id="pd-connect" />
+          <line x1="280" y1="160" x2="280" y2="390" class="wire" id="mos-connect" />
+          <line x1="280" y1="275" x2="400" y2="275" class="wire" />
+          <line x1="400" y1="275" x2="400" y2="350" class="wire" />
+
+          <rect x="600" y="250" width="50" height="50" class="pad" />
+          <text x="605" y="240" class="label-text" style="font-weight: bold;">PAD（引脚）</text>
+
+          <g id="ext-floating" visibility="hidden">
+            <text x="680" y="280" class="label-text" fill="#999">悬空状态（高阻）</text>
+          </g>
+
+          <g id="ext-button-gnd" visibility="hidden">
+            <line x1="650" y1="275" x2="730" y2="275" class="wire" id="ext-btn-wire" />
+            <line x1="730" y1="275" x2="755" y2="250" class="switch-line" id="ext-btn" />
+            <circle cx="730" cy="275" r="3" fill="#333" />
+            <line x1="770" y1="275" x2="820" y2="275" class="wire" />
+            <line x1="820" y1="275" x2="820" y2="310" class="wire" />
+            <line x1="800" y1="310" x2="840" y2="310" stroke="#333" stroke-width="3" />
+            <line x1="810" y1="318" x2="830" y2="318" stroke="#333" stroke-width="2" />
+            <line x1="815" y1="325" x2="825" y2="325" stroke="#333" stroke-width="1" />
+            <text x="720" y="235" class="label-text">外部按键</text>
+            <text x="830" y="305" class="label-text">GND</text>
+          </g>
+
+          <g id="ext-led" visibility="hidden">
+            <line x1="650" y1="275" x2="730" y2="275" class="wire" id="ext-led-wire" />
+            <circle cx="750" cy="275" r="20" fill="none" stroke="#333" stroke-width="2" id="led-circle" />
+            <path d="M740,265 L760,285 M760,265 L740,285" stroke="#333" stroke-width="2" />
+            <line x1="770" y1="275" x2="820" y2="275" class="wire" />
+            <line x1="820" y1="275" x2="820" y2="310" class="wire" />
+            <line x1="800" y1="310" x2="840" y2="310" stroke="#333" stroke-width="3" />
+            <text x="735" y="245" class="label-text">LED</text>
+          </g>
+
+          <g id="ext-i2c" visibility="hidden">
+            <line x1="650" y1="275" x2="850" y2="275" class="wire" id="ext-i2c-wire" />
+            <line x1="750" y1="275" x2="750" y2="120" class="wire" />
+            <path d="M750,120 L750,160 M740,160 L760,165 L740,170 L760,175 L740,180 L760,185 L750,190" class="resistor" />
+            <line x1="750" y1="190" x2="750" y2="210" class="wire" />
+            <line x1="730" y1="120" x2="770" y2="120" stroke="#333" stroke-width="2" />
+            <text x="780" y="175" class="label-text">外部上拉</text>
+            <text x="730" y="110" class="label-text">VCC</text>
+            <text x="780" y="265" class="label-text">I2C 总线</text>
+          </g>
+
+          <g id="ext-analog" visibility="hidden">
+            <line x1="650" y1="275" x2="730" y2="275" class="wire" id="ext-ana-wire" />
+            <rect x="730" y="250" width="80" height="50" fill="#fff" stroke="#333" stroke-width="2" />
+            <text x="745" y="280" class="label-text">传感器</text>
+            <path d="M770,300 L770,330 M755,330 L785,330" stroke="#333" stroke-width="2" />
+          </g>
+
+          <path id="flow-pu" d="M160,70 L160,275 L625,275" class="arrow" />
+          <path id="flow-pd" d="M625,275 L160,275 L160,480" class="arrow" />
+          <path id="flow-pp-high" d="M280,70 L280,275 L750,275 L750,310" class="arrow" />
+          <path id="flow-pp-low" d="M750,310 L750,275 L280,275 L280,480" class="arrow" />
+          <path id="flow-od-low" d="M750,120 L750,275 L280,275 L280,480" class="arrow" />
+          <path id="flow-in" d="M625,275 L400,275 L450,275" class="arrow" />
+          <path id="flow-ana" d="M625,275 L400,275 L400,350 L530,350" class="arrow" />
+
+          <circle id="status-dot" cx="625" cy="275" r="8" class="status-dot hiz" />
+        </svg>
+
+        <div class="controls">
+          <button class="ctrl-btn" onclick="toggleAnimation()">播放/暂停</button>
+          <button class="ctrl-btn" onclick="resetAnimation()">重置动画</button>
+        </div>
+      </div>
+
+      <div id="info-panel">
+        <h3 id="info-title">请选择一个 GPIO 模式</h3>
+        <p id="info-text">点击左侧按钮，查看不同模式下的内部电路逻辑、电流流向及电平状态变化。</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

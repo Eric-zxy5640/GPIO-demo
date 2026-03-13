@@ -1,0 +1,275 @@
+:root {
+  --mcu-bg: #e3f2fd;
+  --ext-bg: #ffffff;
+  --high-color: #ff4444;
+  --low-color: #4444ff;
+  --hiz-color: #999999;
+  --wire-off: #cccccc;
+  --wire-on: #333333;
+  --arrow-color: #ffd700;
+  --logic-bg: #bbdefb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Microsoft YaHei", sans-serif;
+  background-color: #f0f2f5;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+header {
+  background-color: #1976d2;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+#sidebar {
+  width: 240px;
+  background-color: #fff;
+  border-right: 1px solid #ddd;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.mode-btn {
+  padding: 12px;
+  border: 1px solid #1976d2;
+  background: white;
+  color: #1976d2;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+  text-align: left;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.mode-btn:hover {
+  background: #e3f2fd;
+}
+
+.mode-btn.active {
+  background: #1976d2;
+  color: white;
+}
+
+#content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: #f8f9fa;
+  position: relative;
+}
+
+#canvas-container {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+#info-panel {
+  height: 180px;
+  background: white;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 6px solid #1976d2;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+}
+
+#info-title {
+  margin: 0 0 10px 0;
+  color: #1976d2;
+  font-size: 18px;
+}
+
+#info-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #444;
+  white-space: pre-line;
+  margin: 0;
+}
+
+.controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.ctrl-btn {
+  padding: 10px 20px;
+  background: #444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.ctrl-btn:hover {
+  background: #222;
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+  max-width: 1000px;
+}
+
+.mcu-box {
+  fill: var(--mcu-bg);
+  stroke: #90caf9;
+  stroke-width: 2;
+}
+
+.ext-label {
+  font-size: 16px;
+  font-weight: bold;
+  fill: #777;
+}
+
+.mcu-label {
+  font-size: 18px;
+  font-weight: bold;
+  fill: #1565c0;
+}
+
+.wire {
+  fill: none;
+  stroke: var(--wire-off);
+  stroke-width: 3;
+  transition: stroke 0.3s;
+  stroke-linecap: round;
+}
+
+.wire-active {
+  stroke: var(--wire-on);
+}
+
+.wire-high {
+  stroke: var(--high-color);
+}
+
+.wire-low {
+  stroke: var(--low-color);
+}
+
+.wire-hiz {
+  stroke: var(--hiz-color);
+}
+
+.component {
+  fill: white;
+  stroke: #333;
+  stroke-width: 2;
+}
+
+.resistor {
+  fill: none;
+  stroke: #333;
+  stroke-width: 2;
+}
+
+.arrow {
+  fill: none;
+  stroke: var(--arrow-color);
+  stroke-width: 4;
+  stroke-dasharray: 12, 12;
+  visibility: hidden;
+  stroke-linecap: round;
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.flowing {
+  visibility: visible;
+  animation: flow 0.8s linear infinite;
+}
+
+.switch-line {
+  stroke: #333;
+  stroke-width: 3;
+  transition: transform 0.3s;
+  transform-origin: center;
+}
+
+.switch-closed {
+  transform: rotate(-35deg);
+}
+
+.pad {
+  fill: #ffd54f;
+  stroke: #fbc02d;
+  stroke-width: 2;
+}
+
+.buffer {
+  fill: #fff;
+  stroke: #333;
+  stroke-width: 2;
+}
+
+.status-dot {
+  transition: fill 0.3s;
+}
+
+.high {
+  fill: var(--high-color);
+}
+
+.low {
+  fill: var(--low-color);
+}
+
+.hiz {
+  fill: var(--hiz-color);
+}
+
+.label-text {
+  font-size: 13px;
+  fill: #333;
+  font-weight: 500;
+}
+
+.mos-label {
+  font-size: 11px;
+  fill: #555;
+}
