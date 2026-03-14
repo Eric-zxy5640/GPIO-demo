@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STM32 GPIO 交互式教学课件</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="sidebar">
+    <div class="sidebar-title">STM32 GPIO 深度解析</div>
+
+    <div class="nav-group">核心架构</div>
+    <div class="nav-item active" onclick="switchTab('overview')">GPIO 总体结构</div>
+
+    <div class="nav-group">寄存器精讲</div>
+    <div class="nav-item" onclick="switchTab('moder')">MODER (模式)</div>
+    <div class="nav-item" onclick="switchTab('otyper')">OTYPER (输出类型)</div>
+    <div class="nav-item" onclick="switchTab('ospeedr')">OSPEEDR (输出速度)</div>
+    <div class="nav-item" onclick="switchTab('pupdr')">PUPDR (上下拉)</div>
+    <div class="nav-item" onclick="switchTab('idr-odr')">IDR & ODR (数据读写)</div>
+    <div class="nav-item" onclick="switchTab('bsrr')">BSRR (原子置位)</div>
+    <div class="nav-item" onclick="switchTab('afr')">AFR (复用功能)</div>
+
+    <div class="nav-group">进阶与实战</div>
+    <div class="nav-item" onclick="switchTab('exti')">EXTI 关联基础</div>
+    <div class="nav-item" onclick="switchTab('init-flow')">初始化流程动画</div>
+    <div class="nav-item" onclick="switchTab('cases')">常见工程案例</div>
+  </div>
+
+  <div id="main-content">
+    <div id="overview" class="page active">
+      <h1>GPIO 内部硬件结构图</h1>
+      <p>
+        这是 STM32 GPIO 的核心原理图。点击图中的<strong>寄存器模块</strong>或左侧菜单，可以查看具体控制了哪部分电路。电路的设计决定了寄存器的配置方式。
+      </p>
+
+      <div class="svg-container">
+        <svg viewBox="0 0 900 550" id="main-gpio-svg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" class="wire-arrow"></path>
+            </marker>
+          </defs>
+
+          <rect x="10" y="10" width="700" height="530" fill="none" stroke="#bdc3c7" stroke-dasharray="5,5" stroke-width="2"></rect>
+          <text x="20" y="30" fill="#7f8c8d" font-size="14" font-weight="bold">STM32 芯片内部</text>
+          <text x="730" y="30" fill="#7f8c8d" font-size="14" font-weight="bold">外部世界</text>
+
+          <path d="M 710 275 L 820 275" class="wire base-wire pad-wire"></path>
+          <rect x="820" y="255" width="50" height="40" fill="#ecf0f1" stroke="#2c3e50" stroke-width="2"></rect>
+          <text x="845" y="275" class="component-text">I/O 引脚</text>
+
+          <path d="M 740 275 L 740 180" class="wire base-wire"></path>
+          <path d="M 740 275 L 740 370" class="wire base-wire"></path>
+          <polygon points="730,220 750,220 740,200" fill="#fff" stroke="#2c3e50" stroke-width="2"></polygon>
+          <path d="M 730 200 L 750 200" class="wire"></path>
+          <text x="740" y="170" class="component-text">VDD</text>
+          <polygon points="730,350 750,350 740,330" fill="#fff" stroke="#2c3e50" stroke-width="2"></polygon>
+          <path d="M 730 330 L 750 330" class="wire"></path>
+          <text x="740" y="390" class="component-text">VSS</text>
+
+          <g id="svg-reg-pupdr" onclick="switchTab('pupdr')">
+            <path d="M 670 275 L 670 190" class="wire base-wire pupdr-wire"></path>
+            <rect x="660" y="140" width="20" height="50" fill="#fff" stroke="#2c3e50" stroke-width="2"></rect>
+            <path d="M 660 145 L 680 155 M 660 165 L 680 175" class="wire"></path>
+            <rect x="650" y="110" width="40" height="30" rx="4" class="component-box"></rect>
+            <text x="670" y="125" class="component-text">开关(PU)</text>
+            <path d="M 670 110 L 670 90" class="wire"></path>
+            <text x="670" y="80" class="component-text">VDD</text>
+
+            <path d="M 670 275 L 670 360" class="wire base-wire pupdr-wire"></path>
+            <rect x="660" y="360" width="20" height="50" fill="#fff" stroke="#2c3e50" stroke-width="2"></rect>
+            <path d="M 660 365 L 680 375 M 660 385 L 680 395" class="wire"></path>
+            <rect x="650" y="410" width="40" height="30" rx="4" class="component-box"></rect>
+            <text x="670" y="425" class="component-text">开关(PD)</text>
+            <path d="M 670 440 L 670 460" class="wire"></path>
+            <text x="670" y="475" class="component-text">VSS</text>
+
+            <rect x="520" y="30" width="100" height="40" rx="4" class="component-box reg-box"></rect>
+            <text x="570" y="50" class="component-text component-title">PUPDR</text>
+            <path d="M 570 70 L 570 125 L 650 125" class="wire ctrl-wire" stroke-dasharray="4,4"></path>
+            <path d="M 570 70 L 570 425 L 650 425" class="wire ctrl-wire" stroke-dasharray="4,4"></path>
+          </g>
+
+          <path d="M 610 275 L 610 150 L 520 150" class="wire base-wire in-wire" marker-end="url(#arrow)"></path>
+          <path d="M 610 200 L 350 200" class="wire base-wire in-wire" marker-end="url(#arrow)"></path>
+
+          <rect x="250" y="185" width="100" height="30" rx="4" class="component-box"></rect>
+          <text x="300" y="200" class="component-text">模拟输入 (ADC)</text>
+
+          <path d="M 570 200 L 570 215" class="wire ctrl-wire" stroke-dasharray="4,4"></path>
+          <polygon points="480,130 520,150 480,170" fill="#fff" stroke="#2c3e50" stroke-width="2"></polygon>
+          <text x="500" y="185" class="component-text">施密特触发器</text>
+          <path d="M 480 150 L 380 150" class="wire base-wire in-wire"></path>
+
+          <path d="M 380 150 L 380 100 L 260 100" class="wire base-wire in-wire" marker-end="url(#arrow)"></path>
+          <path d="M 380 150 L 260 150" class="wire base-wire in-wire" marker-end="url(#arrow)"></path>
+
+          <g id="svg-reg-idr" onclick="switchTab('idr-odr')">
+            <rect x="140" y="85" width="120" height="35" rx="4" class="component-box reg-box"></rect>
+            <text x="200" y="102" class="component-text component-title">输入数据 (IDR)</text>
+          </g>
+
+          <rect x="140" y="135" width="120" height="35" rx="4" class="component-box"></rect>
+          <text x="200" y="152" class="component-text">复用功能输入 (AF)</text>
+
+          <g id="svg-reg-otyper" onclick="switchTab('otyper')">
+            <rect x="480" y="300" width="80" height="150" fill="none" stroke="#2c3e50" stroke-width="2" stroke-dasharray="2,2"></rect>
+            <text x="520" y="470" class="component-text">输出控制(推挽/开漏)</text>
+            <circle cx="530" cy="330" r="5" fill="#fff" stroke="#2c3e50"></circle>
+            <path d="M 530 335 L 530 350 M 520 350 L 540 350 M 520 360 L 540 360 M 530 360 L 530 375" class="wire"></path>
+            <path d="M 530 310 L 530 325" class="wire"></path>
+            <text x="530" y="300" class="component-text">VDD</text>
+            <path d="M 530 375 L 530 390 M 520 390 L 540 390 M 520 400 L 540 400 M 530 400 L 530 420" class="wire"></path>
+            <path d="M 530 420 L 530 440" class="wire"></path>
+            <text x="530" y="450" class="component-text">VSS</text>
+            <path d="M 530 375 L 610 375 L 610 275" class="wire base-wire out-wire"></path>
+            <path d="M 450 355 L 515 355" class="wire base-wire out-wire"></path>
+            <path d="M 450 395 L 515 395" class="wire base-wire out-wire"></path>
+
+            <rect x="360" y="480" width="80" height="35" rx="4" class="component-box reg-box"></rect>
+            <text x="400" y="497" class="component-text component-title">OTYPER</text>
+            <path d="M 400 480 L 400 410 L 480 410" class="wire ctrl-wire" stroke-dasharray="4,4"></path>
+          </g>
+
+          <g id="svg-reg-ospeedr" onclick="switchTab('ospeedr')">
+            <rect x="480" y="480" width="80" height="35" rx="4" class="component-box reg-box"></rect>
+            <text x="520" y="497" class="component-text component-title">OSPEEDR</text>
+            <path d="M 520 480 L 520 450 L 560 450 L 560 375" class="wire ctrl-wire" stroke-dasharray="4,4"></path>
+          </g>
+
+          <rect x="380" y="340" width="70" height="70" rx="4" fill="#fff" stroke="#2c3e50" stroke-width="2"></rect>
+          <text x="415" y="375" class="component-text">控制逻辑</text>
+
+          <g id="svg-reg-moder" onclick="switchTab('moder')">
+            <polygon points="300,330 340,345 340,405 300,420" fill="#fff" stroke="#2c3e50" stroke-width="2"></polygon>
+            <text x="320" y="375" class="component-text">MUX</text>
+            <path d="M 340 375 L 380 375" class="wire base-wire out-wire" marker-end="url(#arrow)"></path>
+
+            <rect x="280" y="450" width="80" height="35" rx="4" class="component-box reg-box"></rect>
+            <text x="320" y="467" class="component-text component-title">MODER</text>
+            <path d="M 320 450 L 320 410" class="wire ctrl-wire" stroke-dasharray="4,4"></path>
+          </g>
+
+          <g id="svg-reg-odr" onclick="switchTab('idr-odr')">
+            <rect x="140" y="325" width="120" height="35" rx="4" class="component-box reg-box"></rect>
+            <text x="200" y="342" class="component-text component-title">输出数据 (ODR)</text>
+            <path d="M 260 342 L 300 355" class="wire base-wire out-wire" marker-end="url(#arrow)"></path>
+          </g>
+
+          <g id="svg-reg-bsrr" onclick="switchTab('bsrr')">
+            <rect x="140" y="270" width="120" height="35" rx="4" class="component-box reg-box"></rect>
+            <text x="200" y="287" class="component-text component-title">置位复位 (BSRR)</text>
+            <path d="M 200 305 L 200 325" class="wire ctrl-wire" stroke-dasharray="4,4" marker-end="url(#arrow)"></path>
+          </g>
+
+          <g id="svg-reg-afr" onclick="switchTab('afr')">
+            <rect x="140" y="385" width="120" height="35" rx="4" class="component-box"></rect>
+            <text x="200" y="402" class="component-text">复用功能输出 (AF)</text>
+            <path d="M 260 402 L 300 395" class="wire base-wire out-wire" marker-end="url(#arrow)"></path>
+
+            <rect x="40" y="450" width="100" height="35" rx="4" class="component-box reg-box"></rect>
+            <text x="90" y="467" class="component-text component-title">AFR (L/H)</text>
+            <path d="M 90 450 L 90 402 L 140 402" class="wire ctrl-wire" stroke-dasharray="4,4"></path>
+          </g>
+        </svg>
+      </div>
+
+      <div class="card">
+        <h2>图例说明</h2>
+        <p>
+          上图展示了 STM32 引脚背后的完整硬件路径。<strong>虚线</strong>表示寄存器对硬件开关的控制信号，<strong>实线</strong>表示电信号的传输路径。
+        </p>
+        <ul>
+          <li>点击左侧菜单，或直接在图上点击含有方框的寄存器名称，可以查看详细的寄存器位说明。</li>
+          <li><strong>MODER</strong> 决定了整个引脚的大方向（输入、输出、复用、模拟）。</li>
+          <li>引脚电平本质上是通过驱动内部的 P-MOS（接高电平）和 N-MOS（接低电平）来实现的。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="moder" class="page">
+      <h1>MODER (端口模式寄存器)</h1>
+      <p><strong>作用：</strong>这是配置 GPIO 的第一步，相当于总闸。它决定了引脚是输入、输出、复用还是模拟。</p>
+
+      <div class="card">
+        <h3>寄存器结构 (32位)</h3>
+        <p>每 <strong>2 位</strong> 控制 1 个引脚。例如 Bit11 和 Bit10 控制 Pin5。</p>
+        <div class="bit-field-container" id="bitfield-moder"></div>
+
+        <div class="info-panel">
+          <h4 id="moder-info-title">点击上方对应的位查看说明</h4>
+          <p id="moder-info-desc">MODER 寄存器非常重要，配置错了引脚将完全不工作。默认复位状态通常为模拟模式(11)，以降低功耗。</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="otyper" class="page">
+      <h1>OTYPER (输出类型寄存器)</h1>
+      <p><strong>作用：</strong>当 MODER 配置为输出或复用时生效。它决定输出电路是推挽还是开漏。</p>
+
+      <div class="card">
+        <h3>寄存器结构 (低16位有效)</h3>
+        <p>每 <strong>1 位</strong> 控制 1 个引脚。0=推挽，1=开漏。</p>
+        <div class="bit-field-container" id="bitfield-otyper"></div>
+
+        <div class="info-panel">
+          <h4 id="otyper-info-title">点击上方对应的位查看说明</h4>
+          <p id="otyper-info-desc">主要决定输出电路是推挽还是开漏。高16位为保留位。</p>
+        </div>
+
+        <div class="case-grid">
+          <div class="case-card">
+            <h3>0: 推挽输出 (Push-Pull)</h3>
+            <p><strong>原理：</strong>既能输出强高电平，也能输出强低电平。</p>
+            <p><strong>用途：</strong>LED、数码管、普通数字信号输出，如 SPI SCK/MOSI。</p>
+          </div>
+          <div class="case-card">
+            <h3>1: 开漏输出 (Open-Drain)</h3>
+            <p><strong>原理：</strong>只能主动拉低，高电平依赖上拉电阻。</p>
+            <p><strong>用途：</strong>I2C 总线、线与逻辑、电平转换。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ospeedr" class="page">
+      <h1>OSPEEDR (输出速度寄存器)</h1>
+      <p><strong>作用：</strong>控制引脚输出信号的边沿翻转速度（Slew Rate）。</p>
+
+      <div class="card">
+        <h3>寄存器结构 (32位)</h3>
+        <p>每 <strong>2 位</strong> 控制 1 个引脚。速度分为低速、中速、高速、极高速。</p>
+        <div class="bit-field-container" id="bitfield-ospeedr"></div>
+
+        <div class="info-panel">
+          <h4 id="ospeedr-info-title">点击上方对应的位查看说明</h4>
+          <p id="ospeedr-info-desc">原则是：满足通信速率的前提下，速度越低越好，以减少 EMI。</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="pupdr" class="page">
+      <h1>PUPDR (上下拉寄存器)</h1>
+      <p><strong>作用：</strong>控制引脚内部的弱上拉/下拉电阻开关，防止输入悬空。</p>
+
+      <div class="card">
+        <h3>寄存器结构 (32位)</h3>
+        <p>每 <strong>2 位</strong> 控制 1 个引脚。00=无，01=上拉，10=下拉，11=保留。</p>
+        <div class="bit-field-container" id="bitfield-pupdr"></div>
+
+        <div class="info-panel">
+          <h4 id="pupdr-info-title">点击上方对应的位查看说明</h4>
+          <p id="pupdr-info-desc">防止输入悬空。外部已经有上下拉时，内部通常配置为 00。</p>
+        </div>
+
+        <table style="margin-top: 15px;">
+          <tr><th>配置值</th><th>状态</th><th>常见应用场景</th></tr>
+          <tr><td>00</td><td>无上下拉 (浮空)</td><td>标准推挽输出、ADC 模拟输入、外部自带上下拉的输入引脚。</td></tr>
+          <tr><td>01</td><td>上拉 (Pull-Up)</td><td>按键检测（按键接地）、UART RX 空闲防干扰。</td></tr>
+          <tr><td>10</td><td>下拉 (Pull-Down)</td><td>按键检测（按键接 VDD）、等待高电平触发的传感器。</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div id="idr-odr" class="page">
+      <h1>IDR & ODR (数据寄存器)</h1>
+      <p>这两个寄存器是与单片机交互最直接的窗口。一个读外部世界，一个写给外部世界。</p>
+
+      <div class="case-grid">
+        <div class="case-card">
+          <h3>IDR (输入数据寄存器)</h3>
+          <p><strong>只读</strong>，低 16 位有效。</p>
+          <p>读取 IDR，就是读取引脚当前的真实电平状态。</p>
+          <div class="code-box">uint16_t val = GPIOA->IDR;</div>
+        </div>
+        <div class="case-card">
+          <h3>ODR (输出数据寄存器)</h3>
+          <p><strong>可读可写</strong>，低 16 位有效。</p>
+          <p>写 ODR 会改变输出锁存值。读取 ODR 返回的是你写入的值，而不是引脚外部真实电平。</p>
+          <div class="code-box">GPIOA->ODR = 0xFFFF; // 全亮</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="bsrr" class="page">
+      <h1>BSRR (端口位设置/清除寄存器) ★重点</h1>
+      <p><strong>作用：</strong>通过硬件实现对 ODR 某一位的<strong>原子级修改</strong>。</p>
+
+      <div class="card">
+        <h3>BSRR 结构 (32位)</h3>
+        <ul>
+          <li><strong>低16位：</strong>写 1 将 ODR 对应位置 1。</li>
+          <li><strong>高16位：</strong>写 1 将 ODR 对应位清 0。</li>
+        </ul>
+
+        <div class="info-panel">
+          <h4>为什么推荐 BSRR 而不是直接改 ODR？</h4>
+          <p>因为直接对 ODR 做读-改-写，可能在中断场景下覆盖别的位修改。BSRR 是单次写入，属于原子操作，更安全也更高效。</p>
+          <p><code>GPIOA->BSRR = (1 &lt;&lt; 5);</code> 置位 PA5</p>
+          <p><code>GPIOA->BSRR = (1 &lt;&lt; (5 + 16));</code> 复位 PA5</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="afr" class="page">
+      <h1>AFRL & AFRH (复用功能寄存器)</h1>
+      <p><strong>作用：</strong>当 MODER 配置为复用模式(10)时，用 AFR 选择该引脚连接到哪个外设。</p>
+
+      <div class="card">
+        <h3>寄存器结构</h3>
+        <p>每个引脚需要 <strong>4 位</strong> 来选择 AF0 ~ AF15。</p>
+        <ul>
+          <li><strong>AFRL：</strong>控制 Pin0 ~ Pin7</li>
+          <li><strong>AFRH：</strong>控制 Pin8 ~ Pin15</li>
+        </ul>
+
+        <div class="info-panel" style="border-color: #9b59b6;">
+          <h4 style="color: #9b59b6;">配置示例：USART1_TX on PA9</h4>
+          <p>1. MODER 把 PA9 配成复用模式 10。</p>
+          <p>2. 查手册，PA9 对应 USART1_TX 为 AF7。</p>
+          <p>3. 在 AFRH 中把 PA9 对应 4 位设置成 0111。</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="exti" class="page">
+      <h1>EXTI (外部中断) 与 GPIO 的关系</h1>
+      <p>EXTI 不是 GPIO 寄存器，但经常和 GPIO 配合实现按键中断等功能。</p>
+
+      <div class="card">
+        <h3>中断线映射机制</h3>
+        <p>STM32 有 16 根外部中断线 EXTI0 ~ EXTI15，对应 GPIO 的 16 个引脚编号。</p>
+        <ul>
+          <li>PA0、PB0、PC0... 只能有一个接到 EXTI0。</li>
+          <li>PA1、PB1、PC1... 只能有一个接到 EXTI1。</li>
+        </ul>
+        <p>连接关系由 <strong>SYSCFG_EXTICRx</strong> 控制。</p>
+        <ol>
+          <li>开启 GPIO 和 SYSCFG 时钟</li>
+          <li>配置 GPIO 为输入模式</li>
+          <li>设置 SYSCFG 的 EXTI 端口映射</li>
+          <li>配置 EXTI 的上升沿/下降沿触发和中断屏蔽</li>
+          <li>在 NVIC 中开启中断并配置优先级</li>
+        </ol>
+      </div>
+    </div>
+
+    <div id="init-flow" class="page">
+      <h1>GPIO 完整初始化流程</h1>
+      <p>点击“下一步”，观察一个基础推挽输出是如何一步步初始化的。</p>
+
+      <div class="anim-controls">
+        <button class="btn" id="anim-prev" onclick="stepAnim(-1)" disabled>上一步</button>
+        <div class="step-indicator" id="anim-step-text">第 0/6 步</div>
+        <button class="btn btn-primary" id="anim-next" onclick="stepAnim(1)">下一步</button>
+        <button class="btn" id="anim-reset" onclick="resetAnim()" style="margin-left:auto;">重置</button>
+      </div>
+
+      <div class="anim-desc" id="anim-desc-text">点击“下一步”开始演示如何将一个引脚配置为基础的推挽输出。</div>
+
+      <div class="svg-container" style="text-align: center;">
+        <svg viewBox="0 0 600 200" id="anim-svg" style="max-width:600px; margin: 0 auto;">
+          <defs>
+            <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" class="wire-arrow"></path>
+            </marker>
+          </defs>
+
+          <rect id="anim-rcc" x="20" y="80" width="80" height="40" rx="4" class="component-box"></rect>
+          <text x="60" y="100" class="component-text">RCC(时钟)</text>
+
+          <path d="M 100 100 L 150 100" class="wire" marker-end="url(#arrow2)"></path>
+
+          <rect id="anim-moder" x="150" y="20" width="80" height="40" rx="4" class="component-box"></rect>
+          <text x="190" y="40" class="component-text">MODER</text>
+
+          <rect id="anim-otyper" x="150" y="80" width="80" height="40" rx="4" class="component-box"></rect>
+          <text x="190" y="100" class="component-text">OTYPER</text>
+
+          <rect id="anim-ospeedr" x="150" y="140" width="80" height="40" rx="4" class="component-box"></rect>
+          <text x="190" y="160" class="component-text">OSPEEDR</text>
+
+          <rect id="anim-pupdr" x="270" y="80" width="80" height="40" rx="4" class="component-box"></rect>
+          <text x="310" y="100" class="component-text">PUPDR</text>
+
+          <path d="M 230 40 L 400 40 L 400 80" class="wire"></path>
+          <path d="M 230 100 L 270 100" class="wire"></path>
+          <path d="M 230 160 L 400 160 L 400 120" class="wire"></path>
+          <path d="M 350 100 L 400 100" class="wire"></path>
+
+          <rect id="anim-odr" x="400" y="80" width="80" height="40" rx="4" class="component-box"></rect>
+          <text x="440" y="100" class="component-text">ODR/BSRR</text>
+
+          <path d="M 480 100 L 530 100" class="wire" marker-end="url(#arrow2)"></path>
+
+          <rect x="530" y="80" width="50" height="40" fill="#ecf0f1" stroke="#2c3e50" stroke-width="2"></rect>
+          <text x="555" y="100" class="component-text">引脚</text>
+        </svg>
+      </div>
+    </div>
+
+    <div id="cases" class="page">
+      <h1>经典配置案例</h1>
+      <p>选择一个常见应用，查看对应底层寄存器如何配置。</p>
+
+      <div class="case-grid">
+        <div class="case-card" onclick="showCase('led')">
+          <h3>1. 驱动 LED (推挽输出)</h3>
+          <p>目标：控制 PA5 输出高低电平来闪烁 LED。</p>
+        </div>
+        <div class="case-card" onclick="showCase('btn')">
+          <h3>2. 机械按键 (上拉输入)</h3>
+          <p>目标：读取 PC13 按键状态，按键另一端接地。</p>
+        </div>
+        <div class="case-card" onclick="showCase('i2c')">
+          <h3>3. I2C 总线 (开漏复用)</h3>
+          <p>目标：将 PB6 设置为 I2C_SCL。</p>
+        </div>
+        <div class="case-card" onclick="showCase('usart')">
+          <h3>4. 串口发送 (复用推挽)</h3>
+          <p>目标：将 PA9 设置为 USART1_TX。</p>
+        </div>
+      </div>
+
+      <div id="case-detail" class="card hidden">
+        <h2 id="case-title" style="margin-top: 0;"></h2>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 280px;">
+            <ul id="case-desc"></ul>
+          </div>
+          <div style="flex: 1; min-width: 280px; background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; font-family: monospace;">
+            <h4 style="color: #3498db; margin-bottom: 10px;">核心寄存器状态</h4>
+            <div id="case-regs"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
